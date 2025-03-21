@@ -1,36 +1,95 @@
 # illustrator-artboard-range-renamer
 A script that renames multiple artboards in Adobe Illustrator 2025 using numeric ranges and partial text replacements.
 
-Overview
-This script is designed for Adobe Illustrator 2025 using ExtendScript. It allows you to rename artboards by replacing a specific substring in their names. You can specify which artboards to modify by entering ranges (for example, "1-3, 5, 7-9"). The script converts these user-friendly, 1-based artboard numbers into the 0-based indices that Illustrator uses internally.
+# Illustrator Artboard Range Renamer
 
-How It Works
-Initialization and Validation
+A powerful ExtendScript for Adobe Illustrator 2025 that renames artboards by replacing a specific substring in their names. This script lets you target artboards using numeric ranges (e.g., `1-3, 5, 7-9`), making it easy to update multiple artboard names in one go.
 
-The script starts by checking if an Illustrator document is open. If not, it alerts you and stops execution.
-All the main code is wrapped inside a self-invoking function to keep the global scope clean and to allow the use of return statements without errors.
-User Prompts
+## Table of Contents
 
-Text to Find: The script first prompts you to enter the text you want to replace in the artboard names.
-Replacement Text: Next, you provide the text that will replace the found string.
-Artboard Range Input: You then enter a range string (like "1-3,5,7-9"). This input tells the script which artboards should have their names updated.
-Processing the Range Input
+- [Overview](#overview)
+- [Features](#features)
+- [How It Works](#how-it-works)
+- [Usage Instructions](#usage-instructions)
+- [Error Handling & Compatibility](#error-handling--compatibility)
+- [License](#license)
 
-The range input is split by commas to handle each segment separately.
-A helper function (named safeTrim) removes any extra spaces from each segment, ensuring that the input is clean. This is especially useful for older versions of ExtendScript that do not support String.trim().
-Each segment is analyzed:
-If it contains a dash (e.g., "2-5"), it is treated as a range. The script parses the starting and ending numbers, then converts each number in that range from 1-based to 0-based indexing.
-If it is a single number, it is also converted accordingly.
-The script builds an array of valid artboard indices and then removes any duplicate entries manually (using a simple loop instead of Array.indexOf()) to ensure each artboard is processed only once.
-Renaming Process
+## Overview
 
-For each valid, unique artboard index, the script retrieves the current artboard name.
-It creates a regular expression using the text you want to find and the "g" flag, which replaces all instances of that text within the artboard name.
-If the new name differs from the original, the artboard's name is updated, and a counter increases to track how many artboards were modified.
-Completion Notification
+This script automates the tedious task of renaming artboards in Illustrator. Instead of manually updating each artboard, you can simply specify the text to find, the replacement text, and a range of artboards to update. The script converts your user-friendly 1-based input into the 0-based indices required by Illustrator.
 
-After processing all specified artboards, the script displays an alert showing the number of artboards that were successfully renamed.
-Key Benefits
-User-Friendly Input: By allowing numeric ranges (e.g., "1-3,5,7-9"), the script makes it easy for you to specify multiple artboards without having to list each one separately.
-Backward Compatibility: The script includes custom functions to handle cases where modern JavaScript methods (like trim() or Array.indexOf()) are not available in older ExtendScript environments.
-Robust Error Handling: The script gracefully handles situations such as no document being open or the user canceling one of the prompts, ensuring that it exits without causing errors.
+## Features
+
+- **Range-Based Artboard Selection:**  
+  Specify ranges like `1-3, 5, 7-9` to target multiple artboards in one go.
+  
+- **Substring Replacement:**  
+  Replace all occurrences of a specified substring within each artboard name.
+  
+- **Backward Compatibility:**  
+  Designed to work with older ExtendScript versions that lack modern JavaScript methods like `String.trim()` and `Array.indexOf()`.
+  
+- **Robust Error Handling:**  
+  Gracefully exits if no document is open, if prompts are canceled, or if invalid input is provided.
+
+## How It Works
+
+### 1. Initialization and Validation
+- The script first checks if an Illustrator document is open.
+- All code is wrapped in an Immediately Invoked Function Expression (IIFE) to maintain scope and enable the use of `return` statements.
+
+### 2. User Prompts
+- **Text to Find:** Prompts you to enter the substring to search for in the artboard names.
+- **Replacement Text:** Prompts you for the text that will replace the found substring.
+- **Artboard Range Input:** Prompts you to specify the artboards to rename using 1-based numbering in a range format (e.g., `1-3, 5, 7-9`).
+
+### 3. Processing the Range Input
+- The range string is split by commas to handle each segment separately.
+- A custom `safeTrim()` function removes any leading or trailing whitespace from each segment.
+- Segments containing a dash (`-`) are parsed as ranges and converted from 1-based to 0-based indices.
+- Single numbers are similarly converted.
+- The script manually removes duplicate indices to ensure each artboard is processed only once.
+
+### 4. Renaming Process
+- For every valid and unique artboard index:
+  - The script retrieves the current artboard name.
+  - A regular expression (with the global flag) is used to replace all occurrences of the specified substring.
+  - If a change is made, the artboard's name is updated, and a counter tracks the number of successful changes.
+
+### 5. Completion Notification
+- Once all specified artboards are processed, the script displays an alert indicating how many artboards were renamed.
+
+## Usage Instructions
+
+1. **Open Your Document:**  
+   Open the Adobe Illustrator file that contains the artboards you want to rename.
+
+2. **Run the Script:**  
+   In Illustrator, navigate to **File > Scripts > Other Script...** and select the `.jsx` file.
+
+3. **Follow the Prompts:**  
+   - Enter the substring you want to find in the artboard names.
+   - Enter the replacement text.
+   - Specify the artboard numbers or ranges (e.g., `1-3, 5, 7-9`).
+
+4. **View the Result:**  
+   After processing, an alert will indicate how many artboards were renamed.
+
+## Error Handling & Compatibility
+
+- **No Document Open:**  
+  The script will alert you if no document is open and then exit gracefully.
+
+- **User Cancellation:**  
+  If you cancel any prompt, the script exits without errors.
+
+- **Older ExtendScript Support:**  
+  Uses a custom `safeTrim()` function to remove whitespace and manual loops to remove duplicate indices, ensuring compatibility with older ExtendScript versions.
+
+## License
+
+This project is licensed under the MIT License. Feel free to use, modify, and distribute the code as needed.
+
+---
+
+*Happy coding and enjoy automating your Illustrator workflow!*
