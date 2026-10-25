@@ -18,9 +18,11 @@ if (-not $src -or -not (Test-Path $src)) {
     Invoke-WebRequest "$release/illustrator-rename-script.jsx" -OutFile $src -UseBasicParsing
 }
 
-# Each Illustrator has Presets\<locale> (en_US, ar_AE, ...); its menu scripts live in <locale>\Scripts.
+# Each Illustrator (2026, 2025, Beta, ...) has Presets\<locale> (en_US, en_AE, ...); menu scripts live in <locale>\Scripts.
+# Folders left behind by an uninstalled version have no Illustrator.exe and are skipped.
 $locales = @(Get-ChildItem "$adobe\Adobe Illustrator*\Presets\*" -Directory -ErrorAction SilentlyContinue |
-    Where-Object { $_.Name -cmatch '^[a-z]{2}_[A-Z]{2}$' })
+    Where-Object { $_.Name -cmatch '^[a-z]{2}_[A-Z]{2}$' -and
+        (Test-Path (Join-Path $_.Parent.Parent.FullName 'Support Files\Contents\Windows\Illustrator.exe')) })
 if ($locales.Count -eq 0) {
     Finish "Adobe Illustrator was not found in $adobe. Set ADOBE_DIR to your Adobe folder and run again."
     return

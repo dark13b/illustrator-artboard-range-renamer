@@ -4,7 +4,7 @@ An ExtendScript for Adobe Illustrator that does find-and-replace on artboard nam
 
 ## Install
 
-The installer puts the script into every Illustrator version it finds, so it shows up under **File > Scripts > Artboard Range Renamer**. Restart Illustrator afterwards.
+Works with Illustrator 2026, 2025, older CC versions and Illustrator (Beta). The installer puts the script into every installed version it finds (it skips folders left behind by uninstalled versions), so it shows up under **File > Scripts > Artboard Range Renamer**. Restart Illustrator afterwards.
 
 **Windows**: download [artboard-range-renamer.zip](https://github.com/dark13b/illustrator-artboard-range-renamer/releases/latest/download/artboard-range-renamer.zip), unzip it, and double-click `install.bat`. Allow the admin prompt, because Illustrator is in Program Files.
 

@@ -13,10 +13,12 @@ if [ ! -f "$src" ]; then
     curl -fsSL "$release/illustrator-rename-script.jsx" -o "$src"
 fi
 
-# Each Illustrator has Presets.localized/<locale> (en_US, ar_AE, ...); menu scripts live in <locale>/Scripts.
+# Each Illustrator (2026, 2025, Beta, ...) has Presets.localized/<locale> (en_US, en_AE, ...);
+# menu scripts live in <locale>/Scripts. Folders left by an uninstalled version have no .app and are skipped.
 found=0
 for locale in "$apps"/Adobe\ Illustrator*/Presets*/[a-z][a-z]_[A-Z][A-Z]; do
     [ -d "$locale" ] || continue
+    ls -d "${locale%/Presets*}"/*.app >/dev/null 2>&1 || continue
     dest="$locale/Scripts/Artboard Range Renamer.jsx"
     # Try as the current user first; ask for the password only if the folder needs it.
     { mkdir -p "$locale/Scripts" && cp "$src" "$dest"; } 2>/dev/null ||
