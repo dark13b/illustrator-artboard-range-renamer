@@ -1,112 +1,85 @@
 #target illustrator
 
-(function() {
+(function () {
     if (app.documents.length === 0) {
         alert("No document is open. Please open a file and try again.");
         return;
     }
 
     var doc = app.activeDocument;
+    var total = doc.artboards.length;
 
-    // Prompt for the text to find
-    var findStr = prompt("Enter the text to find in artboard names:", "");
-    if (findStr === null) {
-        alert("Canceled.");
+    // Cancel on any prompt exits silently.
+    var findStr = prompt("Text to find in artboard names:", "");
+    if (findStr === null) return;
+    if (findStr === "") {
+        alert("The text to find can't be empty.");
         return;
     }
 
-    // Prompt for the replacement text
-    var replaceStr = prompt("Enter the replacement text:", "");
-    if (replaceStr === null) {
-        alert("Canceled.");
-        return;
-    }
+    var replaceStr = prompt("Replace with (leave empty to delete the text):", "");
+    if (replaceStr === null) return;
 
-    // Prompt for artboard numbers or ranges (1-based)
-    // Example: "1-3,5,7-9"
     var rangeInput = prompt(
-        "Enter artboard numbers/ranges (comma-separated, 1-based), e.g. 1-3,5,7-9:",
+        "Artboards to rename, 1-" + total + " (e.g. 1-3, 5, 7-9).\nLeave empty for all artboards:",
         ""
     );
-    if (rangeInput === null) {
-        alert("Canceled.");
+    if (rangeInput === null) return;
+
+    var parsed = parseRanges(rangeInput, total);
+    if (parsed.invalid.length > 0) {
+        alert("Can't use: " + parsed.invalid.join(", ") +
+              "\nValid artboard numbers are 1-" + total + ". Nothing renamed.");
+        return;
+    }
+    if (parsed.indices.length === 0) {
+        alert("No artboards specified. Nothing renamed.");
         return;
     }
 
-    // Function to trim whitespace (for older ExtendScript)
-    function safeTrim(str) {
-        return str.replace(/^\s+|\s+$/g, "");
+    var changed = 0;
+    var skipped = 0;
+    for (var i = 0; i < parsed.indices.length; i++) {
+        var ab = doc.artboards[parsed.indices[i]];
+        // split/join = literal replace-all: ".", "(", "$" etc. are treated as plain text.
+        var newName = ab.name.split(findStr).join(replaceStr);
+        if (newName === ab.name) continue;
+        if (newName === "") { skipped++; continue; } // never leave an artboard unnamed
+        ab.name = newName;
+        changed++;
     }
 
-    var segments = rangeInput.split(",");
-    var validIndices = [];
+    alert("Done. Renamed " + changed + " of " + parsed.indices.length + " artboard(s)." +
+          (skipped ? "\nSkipped " + skipped + " that would have ended up with an empty name." : ""));
 
-    // Parse each comma-separated segment
-    for (var i = 0; i < segments.length; i++) {
-        var segment = safeTrim(segments[i]);
-
-        // Check if it's a range (e.g. "2-5")
-        if (segment.indexOf("-") !== -1) {
-            var parts = segment.split("-");
-            if (parts.length === 2) {
-                var start = parseInt(parts[0], 10);
-                var end = parseInt(parts[1], 10);
-                if (!isNaN(start) && !isNaN(end) && start <= end) {
-                    for (var r = start; r <= end; r++) {
-                        var zeroBased = r - 1;
-                        if (zeroBased >= 0 && zeroBased < doc.artboards.length) {
-                            validIndices.push(zeroBased);
-                        }
-                    }
-                }
-            }
-        } else {
-            // Single artboard number
-            var single = parseInt(segment, 10);
-            if (!isNaN(single)) {
-                var zeroBasedSingle = single - 1;
-                if (zeroBasedSingle >= 0 && zeroBasedSingle < doc.artboards.length) {
-                    validIndices.push(zeroBasedSingle);
-                }
-            }
+    // "1-3, 5, 9-7" -> { indices: [0,1,2,4,6,7,8], invalid: [] } (0-based, unique, in input order).
+    // Empty input means all artboards. Anything unparseable or out of 1..max goes to `invalid`.
+    function parseRanges(input, max) {
+        var indices = [], invalid = [], seen = {};
+        var trimmed = trim(input);
+        if (trimmed === "") {
+            for (var n = 0; n < max; n++) indices.push(n);
+            return { indices: indices, invalid: invalid };
         }
-    }
-
-    // Remove duplicates without using indexOf
-    var uniqueIndices = [];
-    for (var j = 0; j < validIndices.length; j++) {
-        var alreadyAdded = false;
-        for (var k = 0; k < uniqueIndices.length; k++) {
-            if (uniqueIndices[k] === validIndices[j]) {
-                alreadyAdded = true;
-                break;
+        var parts = trimmed.split(",");
+        for (var p = 0; p < parts.length; p++) {
+            var seg = trim(parts[p]);
+            if (seg === "") continue; // tolerate "1,,2" and trailing commas
+            var m = seg.match(/^(\d+)\s*(?:-\s*(\d+))?$/);
+            if (!m) { invalid.push(seg); continue; }
+            var a = parseInt(m[1], 10);
+            var b = m[2] ? parseInt(m[2], 10) : a;
+            if (a > b) { var t = a; a = b; b = t; } // accept reversed ranges like 9-7
+            if (a < 1 || b > max) { invalid.push(seg); continue; }
+            for (var r = a; r <= b; r++) {
+                if (!seen[r]) { seen[r] = true; indices.push(r - 1); }
             }
         }
-        if (!alreadyAdded) {
-            uniqueIndices.push(validIndices[j]);
-        }
+        return { indices: indices, invalid: invalid };
     }
 
-    if (uniqueIndices.length === 0) {
-        alert("No valid artboard numbers/ranges provided. Nothing renamed.");
-        return;
+    // ExtendScript (ES3) has no String.prototype.trim.
+    function trim(s) {
+        return s.replace(/^\s+|\s+$/g, "");
     }
-
-    var changedCount = 0;
-    for (var m = 0; m < uniqueIndices.length; m++) {
-        var abIndex = uniqueIndices[m];
-        var ab = doc.artboards[abIndex];
-        var oldName = ab.name;
-
-        // Replace all occurrences of findStr
-        var regex = new RegExp(findStr, "g");
-        var newName = oldName.replace(regex, replaceStr);
-
-        if (newName !== oldName) {
-            ab.name = newName;
-            changedCount++;
-        }
-    }
-
-    alert("Done. Renamed " + changedCount + " artboard(s).");
 })();

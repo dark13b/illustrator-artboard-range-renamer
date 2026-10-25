@@ -1,0 +1,21 @@
+# Push a tag like v1.2.0 to publish a release with the installers attached.
+name: Release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: node test.js
+      - name: Build zip and publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          chmod +x install.command
+          zip -j artboard-range-renamer.zip illustrator-rename-script.jsx install.bat install.ps1 install.command README.md LICENSE
+          gh release create "$GITHUB_REF_NAME" --generate-notes \
+            artboard-range-renamer.zip illustrator-rename-script.jsx install.ps1 install.command
